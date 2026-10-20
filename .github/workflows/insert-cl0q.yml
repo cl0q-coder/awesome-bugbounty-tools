@@ -1,5 +1,8 @@
 name: Insert cl0q entry
 on:
+  push:
+    branches:
+      - add-cl0q-subdomain-enum-2
   workflow_dispatch:
 permissions:
   contents: write
@@ -18,21 +21,28 @@ jobs:
           anchor = "- [hakip2host](https://github.com/hakluke/hakip2host)"
           newline = "- [cl0q](https://github.com/cl0q-coder/crawler-node) - Open search engine for domain research & OSINT \u2014 44.1M domains indexed, free API tier."
           lines = open(path, encoding="utf-8").read().split("\n")
-          out = []
-          inserted = False
-          for line in lines:
-              out.append(line)
-              if not inserted and line.startswith(anchor):
-                  out.append(newline)
-                  inserted = True
-          assert inserted, "anchor line not found"
-          open(path, "w", encoding="utf-8").write("\n".join(out))
-          print("inserted ok")
+          if newline in lines:
+              print("cl0q line already present")
+          else:
+              out = []
+              inserted = False
+              for line in lines:
+                  out.append(line)
+                  if not inserted and line.startswith(anchor):
+                      out.append(newline)
+                      inserted = True
+              assert inserted, "anchor line not found"
+              open(path, "w", encoding="utf-8").write("\n".join(out))
+              print("inserted ok")
           PYEOF
       - name: Commit and push
         run: |
           git config user.name "cl0q-coder"
           git config user.email "cl0q-coder@users.noreply.github.com"
           git add README.md
-          git commit -m "Add cl0q to Subdomain Enumeration"
-          git push origin HEAD:add-cl0q-subdomain-enum-2
+          if git diff --cached --quiet; then
+            echo "no changes to commit"
+          else
+            git commit -m "Add cl0q to Subdomain Enumeration [skip ci]"
+            git push origin HEAD:add-cl0q-subdomain-enum-2
+          fi
